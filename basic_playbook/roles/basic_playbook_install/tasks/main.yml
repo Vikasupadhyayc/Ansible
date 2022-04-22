@@ -1,0 +1,27 @@
+- name: 'Install a package'
+  shell: rpm -q python | cut -d '-' -f2
+  register: rpm_check
+                
+- name: If package is installed
+  debug: 
+    msg: "python is already installed"
+  when: rpm_check.rc == 0
+     
+- name: Checking if file present or not
+  stat:
+    path: "/tmp/Python-3.9.12.tgz"
+  register: file_exist
+
+- name: Download python
+  get_url:
+    url: https://www.python.org/ftp/python/3.9.12/Python-3.9.12.tgz
+    dest: /tmp/
+    force: yes
+  when: (rpm_check.stdout  is version("3.9.12", '<')) and ( not file_exist.stat.exists )
+- name: Installing package
+  command: 'rpm -ivh /tmp/Python-3.9.12.tgz'
+  when: (rpm_check.stdout  is version("3.9.12", '<')) and ( file_exist.stat.exists )
+
+- name: 'Checking value'
+  debug:
+    msg: "Installed version is {{ rpm_check.stdout }}" 
